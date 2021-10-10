@@ -1,0 +1,16 @@
+chr6	NAM	gene	167122231	167125913	.	+	.	ID=Zm00029ab307720;biotype=protein_coding;logic_name=cshl_gene
+chr6	NAM	mRNA	167122231	167125913	.	+	.	ID=Zm00029ab307720_T001;Parent=Zm00029ab307720;biotype=protein_coding;transcript_id=Zm00029ab307720_T001;canonical_transcript=1
+chr6	NAM	five_prime_UTR	167122231	167122379	.	+	.	Parent=Zm00029ab307720_T001
+chr6	NAM	exon	167122231	167123717	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.1;ensembl_end_phase=0;ensembl_phase=0;exon_id=Zm00029ab307720_T001.exon.1;rank=1
+chr6	NAM	exon	167123814	167124095	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.2;ensembl_end_phase=0;ensembl_phase=0;exon_id=Zm00029ab307720_T001.exon.2;rank=2
+chr6	NAM	exon	167124216	167124556	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.3;ensembl_end_phase=2;ensembl_phase=2;exon_id=Zm00029ab307720_T001.exon.3;rank=3
+chr6	NAM	exon	167124645	167124924	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.4;ensembl_end_phase=0;ensembl_phase=0;exon_id=Zm00029ab307720_T001.exon.4;rank=4
+chr6	NAM	exon	167125013	167125210	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.5;ensembl_end_phase=0;ensembl_phase=0;exon_id=Zm00029ab307720_T001.exon.5;rank=5
+chr6	NAM	exon	167125305	167125913	.	+	.	Parent=Zm00029ab307720_T001;Name=Zm00029ab307720_T001.exon.6;ensembl_end_phase=-1;ensembl_phase=-1;exon_id=Zm00029ab307720_T001.exon.6;rank=6
+chr6	NAM	CDS	167122380	167123717	.	+	0	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	CDS	167123814	167124095	.	+	0	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	CDS	167124216	167124556	.	+	0	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	CDS	167124645	167124924	.	+	1	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	CDS	167125013	167125210	.	+	0	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	CDS	167125305	167125604	.	+	0	ID=Zm00029ab307720_P001;Parent=Zm00029ab307720_T001;protein_id=Zm00029ab307720_P001
+chr6	NAM	three_prime_UTR	167125605	167125913	.	+	.	Parent=Zm00029ab307720_T001
