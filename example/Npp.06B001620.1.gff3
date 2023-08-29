@@ -1,0 +1,12 @@
+Chr6B	4461259	4483259	Chr6B	.	exon	4461214	4461829	.	+	.	ID=Npp.06B001600.1.t1.exon2;Parent=Npp.06B001600.1.t1;	570
+Chr6B	4461259	4483259	Chr6B	.	CDS	4461214	4461829	1	+	1	ID=Npp.06B001600.1.t1.CDS2;Parent=Npp.06B001600.1.t1;	570
+Chr6B	4461259	4483259	Chr6B	.	gene	4463717	4464103	1	-	.	ID=Npp.06B001610.1;Augustus_transcriptSupport_percentage=100;Augustus_intronSupport=0/0;Source=augustus036127;Integrity=complete;	387
+Chr6B	4461259	4483259	Chr6B	.	mRNA	4463717	4464103	1	-	.	ID=Npp.06B001610.1.t1;Parent=Npp.06B001610.1;IntronSupport=0/0;Integrity=complete;	387
+Chr6B	4461259	4483259	Chr6B	.	exon	4463717	4464103	.	-	.	ID=Npp.06B001610.1.t1.exon1;Parent=Npp.06B001610.1.t1;	387
+Chr6B	4461259	4483259	Chr6B	.	CDS	4463717	4464103	1	-	0	ID=Npp.06B001610.1.t1.CDS1;Parent=Npp.06B001610.1.t1;	387
+Chr6B	4461259	4483259	Chr6B	.	gene	4471259	4473259	1	-	.	ID=Npp.06B001620.1;Augustus_transcriptSupport_percentage=100;Augustus_intronSupport=0/0;Source=augustus036125;Integrity=complete;	2001
+Chr6B	4461259	4483259	Chr6B	.	mRNA	4471259	4473259	1	-	.	ID=Npp.06B001620.1.t1;Parent=Npp.06B001620.1;IntronSupport=0/0;Integrity=complete;	2001
+Chr6B	4461259	4483259	Chr6B	.	exon	4471259	4473259	.	-	.	ID=Npp.06B001620.1.t1.exon1;Parent=Npp.06B001620.1.t1;	2001
+Chr6B	4461259	4483259	Chr6B	.	CDS	4471259	4473259	1	-	0	ID=Npp.06B001620.1.t1.CDS1;Parent=Npp.06B001620.1.t1;	2001
+Chr6B	4461259	4483259	Chr6B	.	gene	4455247	4461829	1	+	.	ID=Npp.06B001600.1;Augustus_transcriptSupport_percentage=100;Augustus_intronSupport=1/1;Source=augustus036128;Integrity=complete;	570
+Chr6B	4461259	4483259	Chr6B	.	mRNA	4455247	4461829	1	+	.	ID=Npp.06B001600.1.t1;Parent=Npp.06B001600.1;IntronSupport=1/1;Integrity=complete;	570

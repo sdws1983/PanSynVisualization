@@ -1,0 +1,5 @@
+Prefix    Genome    Region    GFF	Strand
+Npp.06A001160.1       ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.fasta   Chr6A:3851740-3863740   ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.gff3	TRUE
+Npp.06B001620.1       ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.fasta   Chr6B:4466259-4478259   ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.gff3	TRUE
+Npp.06C001520.1       ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.fasta   Chr6C:5943903-5955903 ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.gff3	TRUE
+Npp.06D001220.1       ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.fasta   Chr6D:4194613-4220850 ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.gff3	TRUE

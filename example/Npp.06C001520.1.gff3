@@ -1,0 +1,4 @@
+Chr6C	5938903	5960903	Chr6C	.	gene	5948903	5950903	1	-	.	ID=Npp.06C001520.1;Augustus_transcriptSupport_percentage=100;Augustus_intronSupport=0/0;Source=augustus158418;Integrity=complete;	2001
+Chr6C	5938903	5960903	Chr6C	.	mRNA	5948903	5950903	1	-	.	ID=Npp.06C001520.1.t1;Parent=Npp.06C001520.1;IntronSupport=0/0;Integrity=complete;	2001
+Chr6C	5938903	5960903	Chr6C	.	exon	5948903	5950903	.	-	.	ID=Npp.06C001520.1.t1.exon1;Parent=Npp.06C001520.1.t1;	2001
+Chr6C	5938903	5960903	Chr6C	.	CDS	5948903	5950903	1	-	0	ID=Npp.06C001520.1.t1.CDS1;Parent=Npp.06C001520.1.t1;	2001
