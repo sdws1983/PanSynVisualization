@@ -11,6 +11,8 @@ ggplot2
 
 [Bedtools](https://bedtools.readthedocs.io/en/latest/content/bedtools-suite.html)
 
+[ParaFly](https://parafly.sourceforge.net/)
+
 ## Useage
 
 ```
@@ -29,11 +31,14 @@ optional arguments:
   --downstream DOWNSTREAM
                         Downstream (default=10000)
   --zoomin ZOOMIN       Zoomin (default=0)
+  --highlight HIGHLIGHT
+                        Highlight genes
   --out OUT             output file prefix
+  --tmp TMP             tmp file
   --width WIDTH         Figure width (default=6)
   --height HEIGHT       Figure height (default=3)
-  --snp                 Flag to indicate if the snp/indels should be showed
-  --run                 Flag to indicate if the mummer should run
+  --snp SNP             Flag to indicate if the snp/indels should be showed
+  --run RUN             Flag to indicate if the mummer should run
 ```
 
 ## Input
@@ -50,4 +55,5 @@ Npp.06D001220.1       ~/reference/Np-X/Np-X.3ddna.Chr.v20210804.fasta   Chr6D:41
 
 ## Output
 
-[pdf file](example/Npp.06C001520.1_Npp.06D001220.1.alignment.pdf)
+[pdf file1](example/Npp.06C001520.1_Npp.06D001220.1.alignment.pdf)
+[pdf file2](example/Srufi2_Chr1_11853340_11893344_Srufi_Chr01_12140000_12180000.alignment.pdf)

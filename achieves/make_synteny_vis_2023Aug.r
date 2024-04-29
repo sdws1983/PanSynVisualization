@@ -11,15 +11,13 @@ parser$add_argument("--info", help = "Genomic information file", required = TRUE
 parser$add_argument("--upstream", type = "numeric", help = "Upstream (default=10000)", default=10000)
 parser$add_argument("--downstream", type = "numeric", help = "Downstream (default=10000)", default=10000)
 parser$add_argument("--zoomin", type = "numeric", help = "Zoomin (default=0)", default=0)
-parser$add_argument("--highlight", help = "Highlight genes", default=FALSE)
 parser$add_argument("--out", help = "output file prefix", required = TRUE)
-parser$add_argument("--tmp", help = "tmp file", default="tmp")
 parser$add_argument("--width", type = "numeric", help = "Figure width (default=6)", default=6)
 parser$add_argument("--height", type = "numeric", help = "Figure height (default=3)", default=3)
 #parser$add_argument("--bedtools", type = "numeric", help = "Figure height", default=10)
 #parser$add_argument("--height", type = "numeric", help = "Figure height", default=10)
-parser$add_argument("--snp", help = "Flag to indicate if the snp/indels should be showed", default=TRUE)
-parser$add_argument("--run", help = "Flag to indicate if the mummer should run", default=TRUE)
+parser$add_argument("--snp", action = "store_true", help = "Flag to indicate if the snp/indels should be showed", default=TRUE)
+parser$add_argument("--run", action = "store_true", help = "Flag to indicate if the mummer should run", default=TRUE)
 #parser$add_argument("--plotout", action = "store_true", help = "Flag to indicate if the script should plot")
 
 # 解析命令行参数
@@ -30,29 +28,21 @@ info <- args$info
 zoomin <- args$zoomin
 upstream <- args$upstream
 downstream <- args$downstream
-highlightgene <- args$highlight
 snpindel <- args$snp
 run <- args$run
-prefixo <- args$out
+prefix <- args$out
 hh <- args$height
 ww <- args$width
-tmpf <- args$tmp
 
 # 打印参数信息
 cat("info:", info, "\n")
 cat("upstream:", upstream, "\n")
 cat("downstream:", downstream, "\n")
-cat("highlight:", highlightgene, "\n")
 cat("zoomin:", zoomin, "\n")
 cat("run:", run, "\n")
-cat("output:", prefixo, "\n")
+cat("output:", prefix, "\n")
 
 info <- read.table(info, header = T)
-
-if (highlightgene != FALSE){
-highgene <- read.table(highlightgene, header = F)
-}
-
 
 n = 1
 block_len = 0.40
@@ -115,7 +105,6 @@ for (i in seq_len(nrow(info))){
         l_fa <- fa; l_chro <- chro; l_start <- start; l_end <- end; l_pre <- prefix
         n = 0
         
-        print (n)
         gfftotal <- gf
     } else if (n == 0){
         out <- data.frame(prefix1 = l_pre, prefix2 = prefix, fa1 = l_fa, fa2 = fa, chr1 = l_chro, chr2 = chro, start1 = l_start, start2 = start, end1 = l_end, end2 = end)
@@ -131,59 +120,36 @@ for (i in seq_len(nrow(info))){
     #system2()
 }
 
-try(gfftotal$arrow <- "")
-
-try(gfftotal[gfftotal$V10=="+",]$arrow <- "last")
-try(gfftotal[gfftotal$V10=="-",]$arrow <- "first")
+gfftotal$arrow <- ""
+gfftotal[gfftotal$V10=="+",]$arrow <- "last"
+gfftotal[gfftotal$V10=="-",]$arrow <- "first"
 #out
-try(out$len1 <- as.numeric(out$end1) - as.numeric(out$start1))
-try(out$len2 <- as.numeric(out$end2) - as.numeric(out$start2))
+out$len1 <- as.numeric(out$end1) - as.numeric(out$start1)
+out$len2 <- as.numeric(out$end2) - as.numeric(out$start2)
 
-try(m <- max(c(max(out$len1), c(max(out$len2)))))
-
-print ("--------------------")
-
+m <- max(c(max(out$len1), c(max(out$len2))))
+#gfftotal
 #break
 
 #block_len = 0.45
 
-for (i in seq_len(nrow(out))){
-    l <- out[i,]
-    prefix = paste0(l$prefix1, "_", l$prefix2)
-
-    #cmd <- paste0("nucmer -l 60 -c 65 ", l$fa1, " ", l$fa2, " -p ", prefix)
-    cmd <- paste0("dnadiff -p ", prefix, " ", l$fa1, " ", l$fa2, "\n")
-    #cmd2 <- paste0("dnadiff -p ",  prefix, " -d ", prefix, ".delta")
-    
-    #print (cmd)
-    cat(cmd, file=tmpf, append=TRUE)
-
-} 
-
-cmd <- paste0("ParaFly -c ", tmpf, " -CPU 20")
-if (run == TRUE){system(cmd)}else{print("1")} ###################################################################################################################################################
-print ("--------------------")
-
-
 n = 1
 nn = 1
-
 for (i in seq_len(nrow(out))){
     l <- out[i,]
     prefix = paste0(l$prefix1, "_", l$prefix2)
-    print (prefix)
-
-
+    cmd <- paste0("dnadiff -p ",  prefix, " ", l$fa1, " ", l$fa2)
+    
+    #print (cmd)
+    if (run == TRUE){system(cmd)}else{print("1")} ###################################################################################################################################################
+    
+    
     mcoords <- read.table(paste0(prefix, ".mcoords"), header = F)
-   
-
-
-    if (snpindel == TRUE){ 
+    
     if (file.info(paste0(prefix, ".snps"))$size == 0){
         snps <- data.frame()
     }else{
         snps <- read.table(paste0(prefix, ".snps"), header = F)
-    }
     }
     
     
@@ -210,8 +176,7 @@ for (i in seq_len(nrow(out))){
         s2 <- data.frame(f1 = s$V2, f2 = s$n + block_len, f3 = nn, f4 = 2)
         s3 <- data.frame(f1 = s$V4, f2 = s$n - block_len, f3 = nn, f4 = 3)
         s4 <- data.frame(f1 = s$V3, f2 = s$n - block_len, f3 = nn, f4 = 4)
-     
-	if (snpindel == TRUE){
+        
         if (file.info(paste0(prefix, ".snps"))$size != 0){
             snps_t1 <- as.numeric(strsplit(strsplit(as.character(snps$V11[1]),":")[[1]][4],"-")[[1]][1])
             snps_t2 <- as.numeric(strsplit(strsplit(as.character(snps$V12[1]),":")[[1]][4],"-")[[1]][1])
@@ -219,25 +184,22 @@ for (i in seq_len(nrow(out))){
             snps$ed <- s$n - block_len
         }else{
             TRUE
-        }}
+        }
         
         if (nn == 1){
             sout <- rbind(s1,s2,s3,s4)
-            if (snpindel == TRUE){
             if (file.info(paste0(prefix, ".snps"))$size != 0){
                 snpst <- snps
             }else{
-                #TRUE
-                snpst <- data.frame()
-            }}
+                TRUE
+            }
         }else{
             sout <- rbind(sout, s1, s2, s3, s4)
-            if (snpindel == TRUE){
             if (file.info(paste0(prefix, ".snps"))$size != 0){
                 snpst <- rbind(snpst, snps)
             }else{
                 TRUE
-            }}
+            }
         }
         
         nn = nn +1
@@ -250,31 +212,22 @@ for (i in seq_len(nrow(out))){
 
 id <- unique(gfftotal[,c("gene_h","prefix")])
 
-gfftotal$highlight <- "no"
-
-if (highlightgene != FALSE){
-#matching_rows <- gfftotal[highgene$V1 %in% gfftotal$V12, ]
-gfftotal[grep(paste(highgene$V1, collapse = "|"), gfftotal$V12), ]$highlight <- "highlight"
-#matching_rows
-}
-#gfftotal
-
 p <- ggplot() + geom_polygon(sout, mapping=aes(x = f1, y = f2, group  = f3 ), linetype = 1, fill = "lightblue")+ 
       #geom_point(s, mapping = aes(x = V1, y = 5), color = "red", size = 0.2) + 
       #geom_point(s, mapping = aes(x = V4, y = 0), color = "red", size = 0.2) + 
       #geom_segment(aes(x = V1, y = st, xend = V4, yend = ed), alpha = .8, color = "#F2735E", size = .5 , data = snpst) + 
       geom_segment(data=gfftotal[gfftotal$V6=="gene",],
-                   mapping = aes(x = V7-V2, y = (exon_h1 + exon_h2)/2, xend = V8-V2, yend=(exon_h1 + exon_h2)/2, color = highlight), 
+                   mapping = aes(x = V7-V2, y = (exon_h1 + exon_h2)/2, xend = V8-V2, yend=(exon_h1 + exon_h2)/2), 
                    arrow = arrow(length=unit(0.15, "cm"), ends = gfftotal[gfftotal$V6=="gene",]$arrow)) + 
       geom_rect(aes(xmin = V7-V2, ymin = exon_h1, xmax = V8-V2, ymax = exon_h2), colour = NA, alpha = .4, size=.1 , data = gfftotal[gfftotal$V6=="exon",]) +
       #geom_vline(xintercept = c(54542107-54540000,54605188-54540000)) +
-      theme_minimal() + #coord_cartesian(xlim = c(0+zoomin,max(max(snpst$V7),max(snpst$V8))-zoomin)) + 
+      theme_minimal() + coord_cartesian(xlim = c(0+zoomin,max(max(snpst$V7),max(snpst$V8))-zoomin)) + 
       scale_y_continuous(breaks = id$gene_h, labels = id$prefix) + ylab("") + xlab("")
 #scale_x_continuous(limits =  c(0,max(max(snpst$V7),max(snpst$V8))), breaks = c(0,max(max(snpst$V7),max(snpst$V8))))# + ggtitle(prefix)
 
 if (snpindel == TRUE){p <- p + geom_segment(aes(x = V1, y = st, xend = V4, yend = ed), alpha = .1, color = "#F2735E", size = .05 , data = snpst)}
 
-pdf(paste0(prefixo, ".alignment.pdf"), width = ww, height = hh)
+pdf(paste0(prefix, ".alignment.pdf"), width = ww, height = hh)
 print (p)
 dev.off()
 
