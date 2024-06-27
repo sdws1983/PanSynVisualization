@@ -79,7 +79,7 @@ for (i in seq_len(nrow(info))){
     if (run == TRUE){system(cmd1)}else{} ###########################################################################################################################################################
     
     if (strand == FALSE){
-        cmdd <- paste0("~/software/seqkit seq -t dna -rp ", fa, " > tmp.fa && mv tmp.fa ", fa)
+        cmdd <- paste0("seqkit seq -t dna -rp ", fa, " > tmp.fa && mv tmp.fa ", fa)
         print (cmdd)
         if (run == TRUE){system(cmdd)}else{}
         #break
@@ -147,6 +147,10 @@ print ("--------------------")
 
 #block_len = 0.45
 
+# 检查并删除旧文件
+if (file.exists(tmpf)) {
+    file.remove(tmpf)
+}
 for (i in seq_len(nrow(out))){
     l <- out[i,]
     prefix = paste0(l$prefix1, "_", l$prefix2)
