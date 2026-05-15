@@ -16,9 +16,9 @@ Rscript make_synteny_vis.r --info example/test.info --out my_output --run
 |------|---------|---------|
 | [bedtools](https://bedtools.readthedocs.io/) | ≥2.30 | Extract sequences by region, intersect GFF annotations |
 | [seqkit](https://bioinf.shenwei.me/seqkit/) | ≥2.3 | Reverse-complement FASTA when strand is negative |
-| [MUMmer4](https://mummer4.github.io/) (dnadiff) | ≥4.0 | Pairwise genome alignment |
-| [ParaFly](https://parafly.sourceforge.net/) | any | Parallelize dnadiff across pairs |
-| [mashtree](https://github.com/lskatz/mashtree) | any | *(optional)* Build phylogenetic tree from sequences (`--tree auto`) |
+| [MUMmer4](https://mummer4.github.io/) (dnadiff) | ≥4.0 | Pairwise alignment (required for `--aligner mummer`) |
+| [ParaFly](https://parafly.sourceforge.net/) | any | Parallelize dnadiff (required for `--aligner mummer`) |
+| [mashtree](https://github.com/lskatz/mashtree) | any | *(optional)* Build phylogenetic tree (`--tree auto`) |
 
 ### R packages
 
@@ -29,6 +29,7 @@ Rscript make_synteny_vis.r --info example/test.info --out my_output --run
 | ape | Phylogenetic tree I/O |
 | ggtree | Tree visualization (ggplot2-based) |
 | patchwork | Combine tree + synteny plots |
+| [Biostrings](https://bioconductor.org/packages/release/bioc/html/Biostrings.html) | *(optional)* Pure-R local alignment (`--aligner biostrings`) |
 
 ## Usage
 
@@ -60,6 +61,7 @@ Rscript make_synteny_vis.r --info <file> --out <prefix> [options]
 | `--keep-tmp` | FALSE | Keep intermediate files for debugging |
 | `--tree` | — | Phylogenetic tree: `auto` or path to `.nwk` file |
 | `--tree-width` | 0.35 | Relative width of the tree panel |
+| `--aligner` | mummer | Alignment engine: `mummer` or `biostrings` |
 
 ## Input format
 
@@ -89,9 +91,32 @@ Each consecutive pair of rows produces one alignment plot (row 1 vs row 2, row 2
 
 1. **Extract** — `bedtools getfasta` slices each region (± upstream/downstream) from the genome FASTA. If `Strand=FALSE`, `seqkit` reverse-complements the sequence. `bedtools intersect` extracts gene/exon annotations from the GFF3.
 
-2. **Align** — `dnadiff` performs pairwise alignment for each consecutive pair. `ParaFly` runs alignments in parallel.
+2. **Align** — Pairwise alignment for each consecutive pair. With `--aligner mummer` (default): `dnadiff` + `ParaFly` in parallel. With `--aligner biostrings`: R-based local alignment with iterative block extraction.
 
-3. **Plot** — MUMmer coordinates are rendered as synteny block polygons. Gene arrows and exon rectangles are drawn from GFF annotations. SNP/indel tracks are optionally overlaid. Output is a PDF.
+3. **Plot** — Alignment coordinates are rendered as synteny block polygons. Gene arrows and exon rectangles are drawn from GFF annotations. SNP/indel tracks are optionally overlaid. Output is a PDF.
+
+## Alignment engines
+
+Two alignment backends are available via `--aligner`:
+
+### MUMmer (`--aligner mummer`, default)
+
+Uses `dnadiff` (MUMmer4) and `ParaFly` for fast, parallel pairwise alignment. Finds discrete synteny blocks using maximal unique matches (MUMs) — ideal for cross-species comparisons and detecting inversions, duplications, and rearrangements.
+
+### Biostrings (`--aligner biostrings`)
+
+Pure-R implementation using the [Biostrings](https://bioconductor.org/packages/release/bioc/html/Biostrings.html) package. Performs local pairwise alignment with iterative masking to extract synteny blocks at base-pair resolution. No external tools needed beyond bedtools and seqkit.
+
+```bash
+Rscript make_synteny_vis.r --info test.info --out demo --aligner biostrings --run
+```
+
+Characteristics:
+- Base-pair-level block boundaries (every gap in the alignment is resolved)
+- Works entirely in R — no MUMmer or ParaFly installation needed
+- Slower than MUMmer for large sequences (~20–30s per 30kb pair)
+- Can be combined with `--tree` mode
+- SNP/indel tracks are not available (Biostrings does not produce `.snps` files)
 
 ## Phylogenetic tree mode
 

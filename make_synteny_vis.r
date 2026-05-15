@@ -179,7 +179,177 @@ extract_annotations <- function(chro, start, end, gff, gff3_path, strand, nn, ex
   return(gf)
 }
 
-# ── Run alignments ───────────────────────────────────────────────────────────
+# ── Biostrings alignment ─────────────────────────────────────────────────────
+
+run_alignments_biostrings <- function(out, tmpdir) {
+  if (!requireNamespace("Biostrings", quietly = TRUE))
+    stop("Biostrings package required. Install: BiocManager::install('Biostrings')", call. = FALSE)
+
+  submat <- Biostrings::nucleotideSubstitutionMatrix(match = 2, mismatch = -3, baseOnly = TRUE)
+
+  for (i in seq_len(nrow(out))) {
+    l      <- out[i, ]
+    prefix <- paste0(l$prefix1, "_", l$prefix2)
+    mcoords_path <- file.path(tmpdir, paste0(prefix, ".mcoords"))
+
+    if (file.exists(mcoords_path) && file.info(mcoords_path)$size > 0) {
+      log_info("Skipping Biostrings alignment (exists): ", basename(mcoords_path))
+      next
+    }
+
+    log_info(sprintf("Biostrings alignment %d/%d: %s vs %s", i, nrow(out), l$prefix1, l$prefix2))
+
+    fa1 <- Biostrings::readDNAStringSet(l$fa1)
+    fa2 <- Biostrings::readDNAStringSet(l$fa2)
+    if (length(fa1) == 0 || length(fa2) == 0)
+      stop("Empty FASTA: ", if (length(fa1) == 0) l$fa1 else l$fa2, call. = FALSE)
+
+    s1 <- fa1[[1]]
+    s2 <- fa2[[1]]
+    s2_rc <- Biostrings::reverseComplement(s2)
+    len1 <- length(s1)
+    len2 <- length(s2)
+
+    blocks <- list()
+    s1_masked <- s1
+    s2_masked <- s2
+    s2_rc_masked <- s2_rc
+    min_score <- 30
+    max_gap_within_block <- 50L  # merge nearby blocks like MUMmer does
+    min_block_len <- 20L
+
+    repeat {
+      # Try both strands
+      pa_fwd <- tryCatch(
+        Biostrings::pairwiseAlignment(s1_masked, s2_masked, type = "local",
+                                       substitutionMatrix = submat),
+        error = function(e) NULL)
+      pa_rev <- tryCatch(
+        Biostrings::pairwiseAlignment(s1_masked, s2_rc_masked, type = "local",
+                                       substitutionMatrix = submat),
+        error = function(e) NULL)
+
+      sfwd <- if (!is.null(pa_fwd)) Biostrings::score(pa_fwd) else -Inf
+      srev <- if (!is.null(pa_rev)) Biostrings::score(pa_rev) else -Inf
+
+      if (sfwd >= srev && sfwd >= min_score) {
+        pa <- pa_fwd; is_rev <- FALSE
+      } else if (srev > sfwd && srev >= min_score) {
+        pa <- pa_rev; is_rev <- TRUE
+      } else {
+        break
+      }
+
+      pat_aln  <- as.character(pa@pattern)
+      subj_aln <- as.character(pa@subject)
+
+      r_start  <- Biostrings::start(pa@pattern)
+      r_end    <- Biostrings::end(pa@pattern)
+      q_start  <- Biostrings::start(pa@subject)
+      q_end    <- Biostrings::end(pa@subject)
+
+      # Convert RC query coordinates back to forward strand: rc_pos → len2 - rc_pos + 1
+      if (is_rev) {
+        q_start_fwd <- len2 - q_end + 1
+        q_end_fwd   <- len2 - q_start + 1
+        tmp         <- q_start_fwd
+        q_start_fwd <- q_end_fwd
+        q_end_fwd   <- tmp
+      } else {
+        q_start_fwd <- q_start
+        q_end_fwd   <- q_end
+      }
+
+      # Walk through alignment base-by-base, split only at gaps > max_gap_within_block
+      r_pos <- r_start
+      s_pos <- q_start
+      blk_r1 <- r_pos; blk_r2 <- r_pos - 1L
+      blk_s1 <- s_pos; blk_s2 <- s_pos - 1L
+      gap_run <- 0L
+
+      for (j in seq_len(nchar(pat_aln))) {
+        pc <- substr(pat_aln, j, j)
+        sc <- substr(subj_aln, j, j)
+        both_base <- (pc != "-" && sc != "-")
+
+        if (both_base) {
+          if (gap_run > max_gap_within_block) {
+            if (blk_r2 - blk_r1 + 1 >= min_block_len) {
+              if (is_rev) {
+                blocks[[length(blocks) + 1]] <- c(blk_r1, blk_r2,
+                                                   len2 - blk_s1 + 1, len2 - blk_s2 + 1)
+              } else {
+                blocks[[length(blocks) + 1]] <- c(blk_r1, blk_r2, blk_s2, blk_s1)
+              }
+            }
+            blk_r1 <- r_pos; blk_s1 <- s_pos
+            blk_r2 <- r_pos - 1L; blk_s2 <- s_pos - 1L
+          }
+          gap_run <- 0L
+          blk_r2 <- r_pos
+          blk_s2 <- s_pos
+        } else {
+          gap_run <- gap_run + 1L
+        }
+
+        if (pc != "-") r_pos <- r_pos + 1L
+        if (sc != "-") s_pos <- s_pos + 1L
+      }
+      # Flush last block
+      if (blk_r2 - blk_r1 + 1 >= min_block_len) {
+        if (is_rev) {
+          blocks[[length(blocks) + 1]] <- c(blk_r1, blk_r2,
+                                             len2 - blk_s1 + 1, len2 - blk_s2 + 1)
+        } else {
+          blocks[[length(blocks) + 1]] <- c(blk_r1, blk_r2, blk_s2, blk_s1)
+        }
+      }
+
+      # Mask aligned regions with Ns for next iteration
+      if (is_rev) {
+        # Mask in s1 (reference, forward strand)
+        Biostrings::subseq(s1_masked, r_start, r_end) <-
+          Biostrings::DNAString(paste(rep("N", r_end - r_start + 1), collapse = ""))
+        # Mask in s2_rc (where alignment was actually done)
+        Biostrings::subseq(s2_rc_masked, q_start, q_end) <-
+          Biostrings::DNAString(paste(rep("N", q_end - q_start + 1), collapse = ""))
+        # Mask corresponding region in s2 forward strand
+        q_fwd_mask_start <- len2 - q_end + 1L
+        q_fwd_mask_end   <- len2 - q_start + 1L
+        Biostrings::subseq(s2_masked, q_fwd_mask_start, q_fwd_mask_end) <-
+          Biostrings::DNAString(paste(rep("N", q_fwd_mask_end - q_fwd_mask_start + 1), collapse = ""))
+      } else {
+        Biostrings::subseq(s1_masked, r_start, r_end) <-
+          Biostrings::DNAString(paste(rep("N", r_end - r_start + 1), collapse = ""))
+        Biostrings::subseq(s2_masked, q_start, q_end) <-
+          Biostrings::DNAString(paste(rep("N", q_end - q_start + 1), collapse = ""))
+      }
+    }
+
+    if (length(blocks) == 0)
+      stop("No alignment blocks found for: ", prefix, call. = FALSE)
+
+    mcoords <- as.data.frame(do.call(rbind, blocks))
+    colnames(mcoords) <- paste0("V", 1:4)
+
+    # Ensure V4 > V3 (reverse-strand convention) to match MUMmer visual orientation.
+    # swap columns 3 and 4 for blocks where V4 < V3
+    fwd_idx <- which(mcoords$V4 < mcoords$V3)
+    if (length(fwd_idx) > 0) {
+      tmp <- mcoords$V3[fwd_idx]
+      mcoords$V3[fwd_idx] <- mcoords$V4[fwd_idx]
+      mcoords$V4[fwd_idx] <- tmp
+    }
+
+    for (j in 5:13) mcoords[[paste0("V", j)]] <- 0
+
+    write.table(mcoords, mcoords_path, row.names = FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
+    log_info(sprintf("  %d synteny blocks found", length(blocks)))
+  }
+  log_info("Biostrings alignment: ", nrow(out), " pair(s) completed")
+}
+
+# ── Run alignments (MUMmer) ──────────────────────────────────────────────────
 
 run_alignments <- function(out, tmpdir, command_file, cpu, run) {
   # Build pending commands (skip if .mcoords already exists)
@@ -426,6 +596,7 @@ main <- function() {
   parser$add_argument("--keep-tmp",   help = "Keep temporary files", default = FALSE)
   parser$add_argument("--tree",       help = "Phylogenetic tree: 'auto' to build with mashtree, or path to .nwk file", default = FALSE)
   parser$add_argument("--tree-width", type = "numeric", help = "Relative width of tree panel (default=0.35)", default = 0.35)
+  parser$add_argument("--aligner",   help = "Alignment engine: 'mummer' (default) or 'biostrings'", default = "mummer")
 
   args <- parser$parse_args()
 
@@ -443,6 +614,7 @@ main <- function() {
   highlightgene <- args$highlight
   tree_mode  <- args$tree
   tree_width <- args$tree_width
+  aligner    <- args$aligner
 
   # ── Setup ────────────────────────────────────────────────────────────────
   dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
@@ -582,10 +754,16 @@ main <- function() {
   log_info(sprintf("Extracted %d regions, %d alignment pairs", nrow(info), nrow(out)))
 
   # ── Stage 2: Align ────────────────────────────────────────────────────
-  log_info("── Stage 2: Pairwise alignment ──")
+  log_info("── Stage 2: Pairwise alignment (", aligner, ") ──")
 
-  command_file <- file.path(tmpdir, "align_commands.txt")
-  run_alignments(out, tmpdir, command_file, cpu, run)
+  if (!run) {
+    log_info("Dry-run: skipping alignment execution")
+  } else if (aligner == "biostrings") {
+    run_alignments_biostrings(out, tmpdir)
+  } else {
+    command_file <- file.path(tmpdir, "align_commands.txt")
+    run_alignments(out, tmpdir, command_file, cpu, run)
+  }
 
   # ── Stage 3: Build gene arrows and highlights ────────────────────────
   log_info("── Stage 3: Building plot data ──")
